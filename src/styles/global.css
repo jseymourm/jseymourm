@@ -1,0 +1,471 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  /* Palette — Pure Monochrome Obsidian + Fine White Lines + Signal Yellow Interactive Accent */
+  --color-canvas: #09090b;
+  --color-surface: #111114;
+  --color-surface-raised: #18181c;
+  --color-ink: #fafafa;
+  --color-ink-secondary: #a1a1aa;
+  --color-ink-muted: #71717a;
+  --color-line: rgba(255, 255, 255, 0.13);
+  --color-line-strong: rgba(255, 255, 255, 0.30);
+  --color-line-subtle: rgba(255, 255, 255, 0.06);
+
+  /* Signal Yellow — reserved strictly for pointer, scroll thumb, and interactive states */
+  --color-signal: #facc15;
+  --color-signal-soft: rgba(250, 204, 21, 0.12);
+  --color-signal-line: rgba(250, 204, 21, 0.55);
+
+  /* Typography */
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Custom Type Scale */
+  --text-display: clamp(2.25rem, 5vw, 3.75rem);
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.035em;
+
+  --text-heading: clamp(1.375rem, 2.5vw, 1.875rem);
+  --text-heading--line-height: 1.2;
+  --text-heading--letter-spacing: -0.025em;
+
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1.4;
+  --text-micro--letter-spacing: 0.12em;
+
+  /* Spacing & Layout Tokens */
+  --spacing-frame: 64rem;
+  --spacing-section: clamp(3.5rem, 7vw, 5.5rem);
+  --spacing-gutter: clamp(1.25rem, 3.5vw, 2.5rem);
+}
+
+@layer base {
+  html {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: var(--color-signal);
+    color: var(--color-canvas);
+  }
+
+  a:focus-visible,
+  button:focus-visible {
+    outline: 1px solid var(--color-signal);
+    outline-offset: 3px;
+  }
+}
+
+/* ==========================================================================
+   Custom Bright Yellow Pointer (Desktop fine-pointer only)
+   ========================================================================== */
+@media (pointer: fine) and (hover: hover) {
+  html.has-custom-cursor,
+  html.has-custom-cursor * {
+    cursor: none !important;
+  }
+
+  html.has-custom-scroll {
+    scrollbar-width: none;
+  }
+
+  html.has-custom-scroll::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+.ias-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-100px, -100px, 0);
+  transition: opacity 160ms ease;
+  will-change: transform;
+}
+
+.ias-cursor[data-visible="true"] {
+  opacity: 1;
+}
+
+.ias-cursor-dot {
+  position: relative;
+  display: block;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  margin-top: -4.5px;
+  border-radius: 9999px;
+  background-color: var(--color-signal);
+  border: 1.5px solid var(--color-signal);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.45);
+  transition:
+    width 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    margin 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 120ms ease;
+}
+
+.ias-cursor-dot::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background-color: var(--color-signal);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Interactive morph: expands into a crisp bright yellow targeting ring */
+.ias-cursor[data-interactive="true"] .ias-cursor-dot {
+  width: 28px;
+  height: 28px;
+  margin-left: -14px;
+  margin-top: -14px;
+  background-color: rgba(250, 204, 21, 0.08);
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.28);
+}
+
+.ias-cursor[data-interactive="true"] .ias-cursor-dot::after {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.ias-cursor[data-pressed="true"] .ias-cursor-dot {
+  transform: scale(0.82);
+}
+
+@media (pointer: coarse), (hover: none) {
+  .ias-cursor {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   Floating 3-Inch Vertical Scroll Rail (Right Margin, Vertically Centered)
+   ========================================================================== */
+.ias-scroll-rail {
+  position: fixed;
+  top: 50%;
+  right: 18px;
+  z-index: 60;
+  height: min(3in, 48dvh);
+  width: 22px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 220ms ease;
+}
+
+.ias-scroll-rail[data-enabled="true"] {
+  opacity: 0.55;
+  pointer-events: auto;
+}
+
+.ias-scroll-rail[data-enabled="true"]:hover,
+.ias-scroll-rail[data-enabled="true"][data-scrolling="true"],
+.ias-scroll-rail[data-enabled="true"][data-dragging="true"] {
+  opacity: 1;
+}
+
+.ias-scroll-track {
+  position: relative;
+  height: 100%;
+  width: 1px;
+  background-color: rgba(255, 255, 255, 0.18);
+  transition: background-color 180ms ease;
+}
+
+.ias-scroll-rail:hover .ias-scroll-track,
+.ias-scroll-rail[data-dragging="true"] .ias-scroll-track {
+  background-color: rgba(255, 255, 255, 0.32);
+}
+
+/* Subtle architectural end-cap ticks on the 3in rail */
+.ias-scroll-track::before,
+.ias-scroll-track::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 7px;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.28);
+  transform: translateX(-50%);
+}
+
+.ias-scroll-track::before {
+  top: 0;
+}
+
+.ias-scroll-track::after {
+  bottom: 0;
+}
+
+.ias-scroll-thumb {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 3px;
+  min-height: 28px;
+  background-color: var(--color-signal);
+  border-radius: 9999px;
+  transform: translate3d(-50%, 0, 0);
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.35);
+  transition: width 160ms ease, box-shadow 160ms ease;
+  will-change: transform, height;
+}
+
+.ias-scroll-rail:hover .ias-scroll-thumb,
+.ias-scroll-rail[data-dragging="true"] .ias-scroll-thumb {
+  width: 5px;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.55);
+}
+
+@media (max-width: 768px), (pointer: coarse) {
+  .ias-scroll-rail {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   Centered 3-Inch Horizontal Scroll Rail (for 01 Experience & 02 Projects)
+   ========================================================================== */
+.ias-hrail {
+  position: relative;
+  width: min(3in, 100%);
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  touch-action: none;
+  opacity: 0.72;
+  transition: opacity 180ms ease;
+}
+
+.ias-hrail:hover,
+.ias-hrail[data-dragging="true"],
+[data-hdeck][data-hovering="true"] .ias-hrail {
+  opacity: 1;
+}
+
+.ias-htrack {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+  transition: background-color 180ms ease;
+}
+
+.ias-hrail:hover .ias-htrack,
+.ias-hrail[data-dragging="true"] .ias-htrack {
+  background-color: rgba(255, 255, 255, 0.36);
+}
+
+/* Architectural vertical end-cap ticks mirroring the vertical rail */
+.ias-htrack::before,
+.ias-htrack::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 7px;
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%);
+}
+
+.ias-htrack::before {
+  left: 0;
+}
+
+.ias-htrack::after {
+  right: 0;
+}
+
+.ias-hthumb {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 3px;
+  min-width: 28px;
+  background-color: var(--color-signal);
+  border-radius: 9999px;
+  transform: translate3d(0, -50%, 0);
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.35);
+  transition: height 160ms ease, box-shadow 160ms ease;
+  will-change: transform, width;
+}
+
+.ias-hrail:hover .ias-hthumb,
+.ias-hrail[data-dragging="true"] .ias-hthumb {
+  height: 5px;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.55);
+}
+
+/* Custom floating-style horizontal scrollbar for overflowing tables/code blocks */
+.prose-swiss pre,
+.ias-hscroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-signal) rgba(255, 255, 255, 0.1);
+}
+
+.prose-swiss pre::-webkit-scrollbar,
+.ias-hscroll::-webkit-scrollbar {
+  height: 3px;
+}
+
+.prose-swiss pre::-webkit-scrollbar-track,
+.ias-hscroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.prose-swiss pre::-webkit-scrollbar-thumb,
+.ias-hscroll::-webkit-scrollbar-thumb {
+  background: var(--color-signal);
+  border-radius: 9999px;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Architectural subtle background grid for hero/detail accents */
+.bg-hairline-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+}
+
+/* Editorial prose styling for MDX case studies & experience detail pages */
+.prose-swiss {
+  --tw-prose-body: var(--color-ink-secondary);
+  --tw-prose-headings: var(--color-ink);
+  --tw-prose-lead: var(--color-ink-secondary);
+  --tw-prose-links: var(--color-ink);
+  --tw-prose-bold: var(--color-ink);
+  --tw-prose-counters: var(--color-ink-muted);
+  --tw-prose-bullets: var(--color-ink-muted);
+  --tw-prose-hr: var(--color-line);
+  --tw-prose-quotes: var(--color-ink);
+  --tw-prose-quote-borders: var(--color-line-strong);
+  --tw-prose-captions: var(--color-ink-muted);
+  --tw-prose-code: var(--color-ink);
+  --tw-prose-pre-code: var(--color-ink);
+  --tw-prose-pre-bg: var(--color-surface);
+  --tw-prose-th-borders: var(--color-line-strong);
+  --tw-prose-td-borders: var(--color-line);
+}
+
+.prose-swiss :where(h2):not(:where([class~="not-prose"] *)) {
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-top: 2.75rem;
+  margin-bottom: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-line);
+}
+
+.prose-swiss :where(h3):not(:where([class~="not-prose"] *)) {
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose-swiss :where(a):not(:where([class~="not-prose"] *)) {
+  text-decoration: underline;
+  text-decoration-color: var(--color-signal-line);
+  text-underline-offset: 4px;
+  transition: color 150ms ease, text-decoration-color 150ms ease;
+}
+
+.prose-swiss :where(a):not(:where([class~="not-prose"] *)):hover {
+  color: var(--color-signal);
+  text-decoration-color: var(--color-signal);
+}
+
+.prose-swiss :where(code):not(:where(pre *)) {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
+  font-weight: 400;
+}
+
+.prose-swiss :where(code):not(:where(pre *))::before,
+.prose-swiss :where(code):not(:where(pre *))::after {
+  content: none;
+}
+
+.prose-swiss :where(pre) {
+  border: 1px solid var(--color-line);
+  border-radius: 0;
+  background-color: var(--color-surface) !important;
+}
+
+.prose-swiss :where(blockquote) {
+  font-style: normal;
+  border-left-width: 1px;
+  border-left-color: var(--color-line-strong);
+  color: var(--color-ink);
+}
+
+.prose-swiss :where(table) {
+  border: 1px solid var(--color-line);
+  font-size: 0.875rem;
+  display: block;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-signal) rgba(255, 255, 255, 0.1);
+}
+
+.prose-swiss :where(thead th) {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+  padding: 0.75rem 1rem;
+  background-color: var(--color-surface);
+}
+
+.prose-swiss :where(tbody td) {
+  padding: 0.75rem 1rem;
+  vertical-align: top;
+}

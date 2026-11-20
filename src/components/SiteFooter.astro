@@ -1,0 +1,21 @@
+---
+import { SITE } from '@/data/site';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-line">
+  <div class="mx-auto flex w-full max-w-[var(--spacing-frame)] flex-col justify-between gap-3 px-4 py-6 sm:flex-row sm:items-center sm:px-6 lg:px-12">
+    <div class="flex items-center gap-3 font-mono text-xs text-ink-muted">
+      <span class="text-ink">{SITE.brand}</span>
+      <span aria-hidden="true">/</span>
+      <span>{SITE.name}</span>
+      <span aria-hidden="true">/</span>
+      <span>{year}</span>
+    </div>
+
+    <p class="font-mono text-[11px] tracking-wider text-ink-muted uppercase">
+      Astro · Tailwind · MDX
+    </p>
+  </div>
+</footer>

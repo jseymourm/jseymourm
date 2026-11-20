@@ -1,0 +1,267 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SectionHeader from '@/components/SectionHeader.astro';
+import SectionNext from '@/components/SectionNext.astro';
+import HorizontalDeck from '@/components/HorizontalDeck.astro';
+import ExperienceRow from '@/components/ExperienceRow.astro';
+import ProjectCard from '@/components/ProjectCard.astro';
+import PixelCoffeeIcon from '@/components/PixelCoffeeIcon.astro';
+import { CAPABILITIES, EDUCATION, SITE } from '@/data/site';
+
+const experienceEntries = (await getCollection('experience')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+
+const projectEntries = (await getCollection('projects')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+
+const formatIndex = (num: number) => String(num).padStart(2, '0');
+---
+
+<BaseLayout>
+  <div>
+    <!-- HERO SECTION (Left-aligned, open-edge, Inter display type, no grid bg / remarks) -->
+    <section id="top" class="scroll-mt-24 py-14 sm:py-24">
+      <div>
+        <h1 class="max-w-3xl text-[length:var(--text-display)] font-medium text-ink">
+          {SITE.name}
+        </h1>
+
+        <p class="mt-6 max-w-2xl text-base leading-relaxed text-ink-secondary sm:text-lg">
+          {SITE.bio}
+        </p>
+
+        <!-- Static Architectural Meta Strip (internal dividers only) -->
+        <div class="mt-10 grid w-full grid-cols-1 border-y border-line divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <div class="py-5 sm:px-5 sm:first:pl-0">
+            <p class="font-mono text-[10px] tracking-[0.14em] text-ink-muted uppercase">
+              Current · May 2026 —
+            </p>
+            <p class="mt-1.5 text-sm font-medium text-ink">{SITE.currentCompany}</p>
+            <p class="mt-0.5 text-xs text-ink-secondary">
+              Service Improvement Analyst, ITSM · Taguig, PH
+            </p>
+          </div>
+          <div class="py-5 sm:px-5">
+            <p class="font-mono text-[10px] tracking-[0.14em] text-ink-muted uppercase">
+              Previous · Oct 2024 — May 2026
+            </p>
+            <p class="mt-1.5 text-sm font-medium text-ink">CGI Philippines</p>
+            <p class="mt-0.5 text-xs text-ink-secondary">
+              SIAM ← Knowledge Manager ← Service Desk
+            </p>
+          </div>
+          <div class="py-5 sm:px-5 sm:last:pr-0">
+            <p class="font-mono text-[10px] tracking-[0.14em] text-ink-muted uppercase">
+              Flagship Build
+            </p>
+            <p class="mt-1.5 text-sm font-medium text-ink">SunScore</p>
+            <p class="mt-0.5 text-xs text-ink-secondary">
+              Service Reliability Index &amp; App Risk Register
+            </p>
+          </div>
+        </div>
+
+        <!-- Selectable Quick Action Row -->
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <a
+            href="#projects"
+            class="group inline-flex items-center gap-2 border border-ink bg-ink px-5 py-2.5 font-mono text-xs tracking-[0.08em] text-canvas uppercase transition-colors duration-150 hover:border-signal hover:bg-signal hover:text-canvas"
+          >
+            <span>Selected Work</span>
+            <span class="transition-transform duration-150 group-hover:translate-y-0.5" aria-hidden="true">
+              ↓
+            </span>
+          </a>
+          <a
+            href={`mailto:${SITE.email}`}
+            class="group inline-flex items-center gap-2 border border-line-strong bg-canvas px-5 py-2.5 font-mono text-xs tracking-[0.08em] text-ink uppercase transition-colors duration-150 hover:border-signal hover:text-signal"
+          >
+            <span>Get in Touch</span>
+            <span class="transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden="true">
+              →
+            </span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <SectionNext href="#experience" label="01 · Experience" />
+
+    <!-- 01 / EXPERIENCE (1-at-a-time horizontal deck with 3in rail & hover wheel scroll) -->
+    <section id="experience" class="min-w-0 scroll-mt-24 pt-6">
+      <SectionHeader
+        index="01"
+        label="Experience"
+        meta={`${formatIndex(experienceEntries.length)} Entries`}
+      />
+      <HorizontalDeck
+        label="Work experience entries"
+        items={experienceEntries.map((entry) => entry.data.company)}
+      >
+        {
+          experienceEntries.map((entry, idx) => (
+            <ExperienceRow
+              slug={entry.id}
+              index={formatIndex(idx + 1)}
+              company={entry.data.company}
+              logo={entry.data.logo}
+              location={entry.data.location}
+              period={entry.data.period}
+              current={entry.data.current}
+              summary={entry.data.summary}
+              roles={entry.data.roles}
+              metrics={entry.data.metrics}
+            />
+          ))
+        }
+      </HorizontalDeck>
+    </section>
+
+    <SectionNext href="#projects" label="02 · Selected Projects" />
+
+    <!-- 02 / PROJECTS (1-at-a-time horizontal deck with 3in rail & hover wheel scroll) -->
+    <section id="projects" class="min-w-0 scroll-mt-24 pt-6">
+      <SectionHeader
+        index="02"
+        label="Selected Projects"
+        meta={`${formatIndex(projectEntries.length)} Case Studies`}
+      />
+      <HorizontalDeck
+        label="Selected project case studies"
+        items={projectEntries.map((project) => project.data.title)}
+      >
+        {
+          projectEntries.map((project, idx) => (
+            <ProjectCard
+              slug={project.id}
+              index={formatIndex(idx + 1)}
+              title={project.data.title}
+              context={project.data.context}
+              period={project.data.period}
+              status={project.data.status}
+              summary={project.data.summary}
+              outcome={project.data.outcome}
+              metrics={project.data.metrics}
+              stack={project.data.stack}
+            />
+          ))
+        }
+      </HorizontalDeck>
+    </section>
+
+    <SectionNext href="#capabilities" label="03 · Capabilities" />
+
+    <!-- 03 / CAPABILITIES (Static reference — open outside, internal column dividers retained) -->
+    <section id="capabilities" class="scroll-mt-24 pt-6">
+      <SectionHeader index="03" label="Capabilities" meta="Practice & Craft" />
+      <div class="grid grid-cols-1 divide-y divide-line md:grid-cols-3 md:divide-x md:divide-y-0">
+        {
+          CAPABILITIES.map((group) => (
+            <div class="py-7 md:px-7 md:first:pl-0 md:last:pr-0">
+              <div class="mb-5 flex items-center justify-between border-b border-line-subtle pb-3">
+                <h3 class="text-sm font-medium tracking-tight text-ink">{group.title}</h3>
+                <span class="font-mono text-[11px] text-ink-muted">{group.index}</span>
+              </div>
+              <ul class="space-y-2.5">
+                {group.items.map((item) => (
+                  <li class="flex items-start gap-2.5 text-sm text-ink-secondary">
+                    <span class="mt-2 h-px w-2.5 shrink-0 bg-line-strong" aria-hidden="true" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <SectionNext href="#education" label="04 · Education" />
+
+    <!-- 04 / EDUCATION (Static reference — open outside, internal row dividers retained) -->
+    <section id="education" class="scroll-mt-24 pt-6">
+      <SectionHeader
+        index="04"
+        label="Education"
+        meta={`${formatIndex(EDUCATION.length)} Institutions`}
+      />
+      <div class="divide-y divide-line">
+        {
+          EDUCATION.map((edu) => (
+            <div class="grid grid-cols-1 gap-4 py-7 md:grid-cols-12 md:gap-8">
+              <div class="space-y-1 md:col-span-4">
+                <p class="font-mono text-xs text-ink-secondary">{edu.period}</p>
+                <p class="font-mono text-[11px] tracking-wider text-ink-muted uppercase">
+                  {edu.location}
+                </p>
+              </div>
+              <div class="space-y-2.5 md:col-span-8">
+                <div>
+                  <h3 class="text-base font-medium tracking-tight text-ink sm:text-lg">
+                    {edu.institution}
+                  </h3>
+                  <p class="text-sm text-ink-secondary">{edu.degree}</p>
+                </div>
+                <ul class="space-y-1.5 pt-1">
+                  {edu.highlights.map((item) => (
+                    <li class="text-sm leading-relaxed text-ink-muted">{item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <SectionNext href="#contact" label="05 · Contact" />
+
+    <!-- 05 / CONTACT (Open outside, internal column & row dividers retained) -->
+    <section id="contact" class="scroll-mt-24 pt-6">
+      <SectionHeader index="05" label="Contact" meta="Direct Channels" />
+      <div class="grid grid-cols-1 divide-y divide-line md:grid-cols-12 md:divide-x md:divide-y-0">
+        <div class="flex flex-col justify-center gap-4 py-8 md:col-span-5 md:pr-8">
+          <PixelCoffeeIcon class="h-8 w-8" />
+          <h3 class="text-[length:var(--text-heading)] font-medium text-ink">
+            Let's grab some Coffee?
+          </h3>
+        </div>
+
+        <div class="divide-y divide-line md:col-span-7">
+          {
+            SITE.links.map((link) => (
+              <a
+                href={link.href}
+                target={link.external ? '_blank' : undefined}
+                rel={link.external ? 'noopener noreferrer' : undefined}
+                class="group flex items-center justify-between gap-4 border-l-2 border-l-transparent px-4 py-5 transition-all duration-150 hover:border-l-signal hover:bg-surface sm:px-6"
+              >
+                <div class="space-y-0.5">
+                  <p class="font-mono text-[11px] tracking-[0.12em] text-ink-muted uppercase">
+                    {link.label}
+                  </p>
+                  <p class="text-sm text-ink transition-colors duration-150 group-hover:text-signal sm:text-base">
+                    {link.handle}
+                  </p>
+                </div>
+                <span
+                  class="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-line-strong bg-canvas font-mono text-xs text-ink-secondary transition-all duration-150 group-hover:border-signal group-hover:text-signal"
+                  aria-hidden="true"
+                >
+                  <span class="transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                    {link.external ? '↗' : '→'}
+                  </span>
+                </span>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <SectionNext href="#top" label="Back to Top" direction="up" />
+  </div>
+</BaseLayout>

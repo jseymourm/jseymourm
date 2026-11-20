@@ -1,0 +1,197 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/data/site';
+
+export async function getStaticPaths() {
+  const entries = (await getCollection('experience')).sort(
+    (a, b) => a.data.order - b.data.order,
+  );
+
+  return entries.map((entry, idx) => ({
+    params: { slug: entry.id },
+    props: {
+      entry,
+      prev: entries[idx - 1] ?? null,
+      next: entries[idx + 1] ?? null,
+    },
+  }));
+}
+
+const { entry, prev, next } = Astro.props;
+const { Content } = await render(entry);
+const { company, logo, location, period, current, summary, roles, metrics, tags } = entry.data;
+---
+
+<BaseLayout
+  title={`${company} — ${SITE.name}`}
+  description={summary}
+>
+  <div class="space-y-12 sm:space-y-16">
+    <!-- Header Section (Open outside, internal hairlines retained) -->
+    <div>
+      <!-- Top Breadcrumb Bar -->
+      <div class="flex items-center justify-between border-b border-line pb-4">
+        <a
+          href="/#experience"
+          class="group inline-flex items-center gap-2 border border-line-strong bg-canvas px-2.5 py-1 font-mono text-[11px] tracking-[0.1em] text-ink-secondary uppercase transition-colors duration-150 hover:border-signal hover:text-signal"
+        >
+          <span class="transition-transform duration-150 group-hover:-translate-x-0.5" aria-hidden="true">←</span>
+          <span>Experience</span>
+        </a>
+        <span class="font-mono text-[11px] tracking-[0.12em] text-ink-muted uppercase">
+          {period}
+        </span>
+      </div>
+
+      <!-- Header Content -->
+      <header class="border-b border-line py-10 sm:py-14">
+        <div class="mb-4 flex flex-wrap items-center gap-3">
+          <span class="font-mono text-[11px] tracking-[0.12em] text-ink-muted uppercase">
+            {location}
+          </span>
+          {
+            current && (
+              <span class="inline-flex items-center gap-1.5 border border-line-strong bg-canvas px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-ink uppercase">
+                <span class="h-1.5 w-1.5 rounded-full bg-ink" aria-hidden="true" />
+                Current Role
+              </span>
+            )
+          }
+        </div>
+
+        <div class="flex items-center gap-5">
+          {
+            logo && (
+              <div class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface">
+                <img
+                  src={logo}
+                  alt={`${company} logo`}
+                  width="56"
+                  height="56"
+                  class="h-14 w-14 object-contain"
+                />
+              </div>
+            )
+          }
+          <h1 class="text-[length:var(--text-display)] font-medium text-ink">
+            {company}
+          </h1>
+        </div>
+
+        <p class="mt-5 max-w-2xl text-base leading-relaxed text-ink-secondary">
+          {summary}
+        </p>
+
+        <!-- Roles Matrix (internal horizontal dividers only) -->
+        <div class="mt-8 border-y border-line divide-y divide-line">
+          {
+            roles.map((role) => (
+              <div class="grid grid-cols-1 gap-2 py-4 sm:grid-cols-12 sm:items-baseline sm:gap-6">
+                <div class="sm:col-span-4">
+                  <p class="font-mono text-xs text-ink-muted">{role.period}</p>
+                </div>
+                <div class="space-y-1 sm:col-span-8">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="text-sm font-medium text-ink">{role.title}</h2>
+                    {role.promoted && (
+                      <span class="border border-line-strong px-1.5 py-0.5 font-mono text-[10px] tracking-[0.1em] text-ink uppercase">
+                        Promoted
+                      </span>
+                    )}
+                  </div>
+                  <p class="text-xs leading-relaxed text-ink-secondary">{role.focus}</p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+
+        {
+          metrics.length > 0 && (
+            <dl class="grid grid-cols-1 border-b border-line divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              {metrics.map((metric) => (
+                <div class="py-4 sm:px-4 sm:first:pl-0">
+                  <dt class="font-mono text-[10px] tracking-[0.14em] text-ink-muted uppercase">
+                    {metric.label}
+                  </dt>
+                  <dd class="mt-1 font-mono text-xl font-medium tracking-tight text-ink tabular-nums">
+                    {metric.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )
+        }
+
+        {
+          tags.length > 0 && (
+            <ul class="mt-6 flex flex-wrap gap-1.5" aria-label="Domains">
+              {tags.map((tag) => (
+                <li class="border border-line bg-canvas px-2.5 py-0.5 font-mono text-[10px] tracking-wider text-ink-secondary uppercase">
+                  {tag}
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </header>
+    </div>
+
+    <!-- MDX Body -->
+    <article class="py-2">
+      <div class="prose prose-invert prose-swiss max-w-2xl">
+        <Content />
+      </div>
+    </article>
+
+    <!-- Prev / Next Navigation (internal top & center dividers only) -->
+    <nav
+      aria-label="Experience pagination"
+      class="grid grid-cols-1 border-t border-line divide-y divide-line sm:grid-cols-2 sm:divide-x sm:divide-y-0"
+    >
+      <div>
+        {
+          prev ? (
+            <a
+              href={`/experience/${prev.id}`}
+              class="group flex h-full flex-col gap-1 border-l-2 border-l-transparent px-4 py-6 transition-all duration-150 hover:border-l-signal hover:bg-surface sm:px-6"
+            >
+              <span class="font-mono text-[10px] tracking-[0.14em] text-ink-muted uppercase transition-colors duration-150 group-hover:text-signal">
+                ← Newer
+              </span>
+              <span class="text-sm font-medium text-ink transition-colors duration-150 group-hover:text-signal">
+                {prev.data.company}
+              </span>
+            </a>
+          ) : (
+            <div class="px-4 py-6 font-mono text-[10px] tracking-[0.14em] text-ink-muted/50 uppercase sm:px-6">
+              Most recent entry
+            </div>
+          )
+        }
+      </div>
+      <div>
+        {
+          next ? (
+            <a
+              href={`/experience/${next.id}`}
+              class="group flex h-full flex-col gap-1 border-r-2 border-r-transparent px-4 py-6 text-left transition-all duration-150 hover:border-r-signal hover:bg-surface sm:px-6 sm:text-right"
+            >
+              <span class="font-mono text-[10px] tracking-[0.14em] text-ink-muted uppercase transition-colors duration-150 group-hover:text-signal">
+                Earlier →
+              </span>
+              <span class="text-sm font-medium text-ink transition-colors duration-150 group-hover:text-signal">
+                {next.data.company}
+              </span>
+            </a>
+          ) : (
+            <div class="px-4 py-6 font-mono text-[10px] tracking-[0.14em] text-ink-muted/50 uppercase sm:px-6 sm:text-right">
+              End of archive
+            </div>
+          )
+        }
+      </div>
+    </nav>
+  </div>
+</BaseLayout>

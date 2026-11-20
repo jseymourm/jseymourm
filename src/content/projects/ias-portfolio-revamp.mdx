@@ -1,0 +1,43 @@
+---
+title: ".ias — Minimal Portfolio Architecture"
+context: "Personal / Open Source"
+period: "2024 — 2026"
+status: "Ongoing"
+order: 3
+summary: "Rebuilding my very first manually coded HTML/CSS portfolio into a static-first, type-safe Astro, Tailwind CSS, and MDX architecture with custom precision pointer and scroll chrome."
+outcome: "Zero framework hydration, strict TypeScript content schemas, standalone Swiss floating slabs, and < 2 KB vanilla JS for custom yellow pointer and 3-inch scroll rail."
+metrics:
+  - value: "< 2 KB"
+    label: "Vanilla JS"
+  - value: "10"
+    label: "Static Routes"
+  - value: "Strict"
+    label: "TypeScript"
+stack:
+  - "Astro"
+  - "TypeScript"
+  - "Tailwind CSS"
+  - "MDX"
+  - "Firebase Hosting"
+repoUrl: "https://github.com/jseymourm/jseymourm"
+---
+
+## Context
+
+The first version of `.ias` (`v1-legacy`) was my very first hand-coded web project—written directly in a single `index.html` and an 826-line `style.css` using CDN icon fonts and absolute-positioned animations. It served as an honest milestone, but as my work matured across CGI Philippines and Sun Life Global Solutions, both the content and engineering deserved a clean architectural reset.
+
+## Architectural Decisions
+
+### 1. Static-First Astro with Zero Framework Hydration
+
+Every route, layout, and component is authored as a static `.astro` file compiled directly to semantic HTML and CSS. Client-side JavaScript is limited strictly to a single progressive-enhancement script (`< 2 KB`) powering the desktop bright yellow targeting pointer and the floating 3-inch vertical scroll rail—automatically disabled on touch devices and respecting `prefers-reduced-motion`.
+
+### 2. Type-Safe Content Collections with MDX
+
+Both career entries (`/experience/[slug]`) and case studies (`/projects/[slug]`) live in structured Astro Content Collections validated at build time via Zod schemas. Multi-role progressions (such as moving from Service Desk Specialist and Knowledge Manager into SIAM at CGI Philippines) and quantified KPI strips are modeled as typed arrays rather than copy-pasted markup.
+
+### 3. Swiss Floating Slabs & Interactive Signifiers
+
+- **Palette**: Pure monochrome obsidian (`#09090B`) framed into standalone `1px` white-bordered slabs separated by generous vertical void, reserving signal yellow (`#FACC15`) strictly for interactive affordances, pointer feedback, and scroll telemetry.
+- **Typography**: Self-hosted `Inter Variable` paired with `JetBrains Mono Variable` for dates, metrics, indices, and metadata—eliminating external font CDN jitter.
+- **Deployment**: Pre-rendered static output (`dist/`) configured for Firebase Hosting with clean URLs and immutable asset caching on `/_astro/**`.

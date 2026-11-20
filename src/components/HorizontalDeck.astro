@@ -1,0 +1,326 @@
+---
+interface Props {
+  label: string;
+  items: string[];
+}
+
+const { label, items } = Astro.props;
+const total = items.length;
+const formatIndex = (num: number) => String(num).padStart(2, '0');
+const secondLabel = items[1] ?? items[0] ?? '';
+---
+
+<div
+  class="group/deck relative min-w-0 pt-6"
+  data-hdeck
+  data-hovering="false"
+  data-items={JSON.stringify(items)}
+>
+  <!-- 1-at-a-Time Full-Width Horizontal Track -->
+  <div class="relative overflow-hidden">
+    <div
+      data-deck-track
+      class="no-scrollbar relative flex snap-x snap-mandatory items-stretch overflow-x-auto scroll-smooth"
+      role="region"
+      aria-label={label}
+    >
+      <slot />
+    </div>
+  </div>
+
+  <!-- Centered 3-Inch Interactive Horizontal Scroll Rail -->
+  <div class="mt-6 flex flex-col items-center gap-2">
+    <div
+      class="ias-hrail"
+      data-deck-rail
+      data-interactive
+      role="scrollbar"
+      aria-orientation="horizontal"
+      aria-label={`${label} position`}
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+    >
+      <div class="ias-htrack" data-deck-htrack>
+        <div class="ias-hthumb" data-deck-hthumb></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deck Controls & Named Next Cue Strip -->
+  <div class="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
+    <div class="flex flex-wrap items-center gap-4">
+      <p class="font-mono text-xs text-ink-secondary tabular-nums">
+        <span data-deck-current class="text-ink">01</span>
+        <span class="mx-1 text-ink-muted">/</span>
+        <span class="text-ink-muted">{formatIndex(total)}</span>
+      </p>
+
+      <span class="hidden h-3 w-px bg-line sm:inline-block" aria-hidden="true"></span>
+
+      <span
+        data-deck-scroll-hint
+        class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em] text-ink-muted uppercase transition-colors duration-150 group-data-[hovering=true]/deck:text-signal"
+      >
+        <span>Scroll</span>
+        <span aria-hidden="true">↔</span>
+      </span>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        data-deck-prev
+        aria-label="Previous entry"
+        class="group inline-flex items-center gap-2 border border-line-strong bg-canvas px-3 py-2 font-mono text-[11px] tracking-[0.1em] text-ink-secondary uppercase transition-colors duration-150 hover:border-signal hover:bg-surface hover:text-signal"
+      >
+        <span class="transition-transform duration-150 group-hover:-translate-x-0.5" aria-hidden="true">
+          ←
+        </span>
+        <span>Prev</span>
+      </button>
+
+      <button
+        type="button"
+        data-deck-next
+        aria-label="Next entry"
+        class="group inline-flex max-w-[260px] items-center gap-2 border border-line-strong bg-canvas px-3.5 py-2 font-mono text-[11px] tracking-[0.08em] text-ink uppercase transition-colors duration-150 hover:border-signal hover:bg-surface hover:text-signal sm:max-w-[340px]"
+      >
+        <span class="shrink-0 text-ink-muted transition-colors duration-150 group-hover:text-signal">
+          Next:
+        </span>
+        <span data-deck-next-name class="truncate">{secondLabel}</span>
+        <span
+          data-deck-next-arrow
+          class="shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
+          aria-hidden="true"
+        >
+          →
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-hdeck]').forEach((deck) => {
+    const track = deck.querySelector<HTMLElement>('[data-deck-track]');
+    const slides = Array.from(deck.querySelectorAll<HTMLElement>('[data-deck-slide]'));
+    const prevBtn = deck.querySelector<HTMLButtonElement>('[data-deck-prev]');
+    const nextBtn = deck.querySelector<HTMLButtonElement>('[data-deck-next]');
+    const nextNameEl = deck.querySelector<HTMLElement>('[data-deck-next-name]');
+    const nextArrowEl = deck.querySelector<HTMLElement>('[data-deck-next-arrow]');
+    const currentLabel = deck.querySelector<HTMLElement>('[data-deck-current]');
+    const railEl = deck.querySelector<HTMLElement>('[data-deck-rail]');
+    const htrackEl = deck.querySelector<HTMLElement>('[data-deck-htrack]');
+    const hthumbEl = deck.querySelector<HTMLElement>('[data-deck-hthumb]');
+
+    if (!track || slides.length === 0) return;
+
+    let itemNames: string[] = [];
+    try {
+      itemNames = JSON.parse(deck.dataset.items || '[]');
+    } catch {
+      itemNames = [];
+    }
+
+    let activeIndex = 0;
+    let isDragging = false;
+    let dragOffsetX = 0;
+    let wheelLockUntil = 0;
+
+    const getRailMetrics = () => {
+      const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
+      const trackRect = htrackEl?.getBoundingClientRect();
+      const trackWidth = trackRect?.width ?? 0;
+      const ratio = slides.length > 0 ? 1 / slides.length : 1;
+      const thumbWidth = Math.min(trackWidth, Math.max(28, trackWidth * ratio));
+      const maxThumbX = Math.max(0, trackWidth - thumbWidth);
+      return { maxScroll, trackRect, trackWidth, thumbWidth, maxThumbX };
+    };
+
+    const syncThumb = () => {
+      if (!railEl || !hthumbEl) return;
+      const { maxScroll, thumbWidth, maxThumbX } = getRailMetrics();
+      const progress = maxScroll > 0 ? Math.min(1, Math.max(0, track.scrollLeft / maxScroll)) : 0;
+      const thumbX = progress * maxThumbX;
+      hthumbEl.style.width = `${thumbWidth}px`;
+      hthumbEl.style.transform = `translate3d(${thumbX}px, -50%, 0)`;
+      railEl.setAttribute('aria-valuenow', String(Math.round(progress * 100)));
+    };
+
+    const updateUI = (index: number) => {
+      activeIndex = index;
+      if (currentLabel) {
+        currentLabel.textContent = String(index + 1).padStart(2, '0');
+      }
+      const nextIndex = (index + 1) % slides.length;
+      if (nextNameEl && itemNames[nextIndex]) {
+        nextNameEl.textContent = itemNames[nextIndex];
+      }
+      if (nextArrowEl) {
+        nextArrowEl.textContent = index === slides.length - 1 ? '↺' : '→';
+      }
+    };
+
+    const goTo = (index: number, smooth = true) => {
+      const wrapped = ((index % slides.length) + slides.length) % slides.length;
+      const target = slides[wrapped];
+      if (!target) return;
+      track.scrollTo({
+        left: target.offsetLeft,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+      updateUI(wrapped);
+    };
+
+    prevBtn?.addEventListener('click', () => goTo(activeIndex - 1));
+    nextBtn?.addEventListener('click', () => goTo(activeIndex + 1));
+
+    // Hover state for subtle visual cues
+    deck.addEventListener('pointerenter', () => {
+      deck.dataset.hovering = 'true';
+    });
+    deck.addEventListener('pointerleave', () => {
+      deck.dataset.hovering = 'false';
+    });
+
+    // Smart boundary-release step-snapped wheel scrolling while hovering this deck
+    deck.addEventListener(
+      'wheel',
+      (event) => {
+        if (slides.length <= 1) return;
+
+        // Determine dominant delta (supports both vertical mouse wheel & horizontal trackpad)
+        const useHorizontal = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+        const delta = useHorizontal ? event.deltaX : event.deltaY;
+        if (Math.abs(delta) < 6) return;
+
+        const goingForward = delta > 0;
+        const atStart = activeIndex === 0;
+        const atEnd = activeIndex === slides.length - 1;
+
+        // Release to vertical page scroll cleanly at boundaries (only if scrolling vertically)
+        if (!useHorizontal && ((goingForward && atEnd) || (!goingForward && atStart))) {
+          return;
+        }
+
+        // Prevent vertical scroll while stepping horizontally inside the deck
+        event.preventDefault();
+
+        const now = performance.now();
+        if (now < wheelLockUntil) return;
+        wheelLockUntil = now + 380;
+
+        if (goingForward && !atEnd) {
+          goTo(activeIndex + 1);
+        } else if (!goingForward && !atStart) {
+          goTo(activeIndex - 1);
+        }
+      },
+      { passive: false },
+    );
+
+    // Interactive 3-inch horizontal scroll rail (click & drag)
+    if (railEl && htrackEl && hthumbEl) {
+      const scrubToClientX = (clientX: number, offsetX: number) => {
+        const { maxScroll, trackRect, maxThumbX } = getRailMetrics();
+        if (!trackRect || maxScroll <= 0 || maxThumbX <= 0) return;
+
+        const targetX = Math.min(maxThumbX, Math.max(0, clientX - trackRect.left - offsetX));
+        const progress = targetX / maxThumbX;
+
+        track.style.scrollSnapType = 'none';
+        track.style.scrollBehavior = 'auto';
+        track.scrollLeft = progress * maxScroll;
+        syncThumb();
+      };
+
+      railEl.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        const thumbRect = hthumbEl.getBoundingClientRect();
+        const clickedThumb =
+          event.clientX >= thumbRect.left && event.clientX <= thumbRect.right;
+
+        dragOffsetX = clickedThumb
+          ? event.clientX - thumbRect.left
+          : thumbRect.width / 2;
+
+        isDragging = true;
+        railEl.dataset.dragging = 'true';
+        railEl.setPointerCapture(event.pointerId);
+
+        if (!clickedThumb) {
+          scrubToClientX(event.clientX, dragOffsetX);
+        }
+      });
+
+      railEl.addEventListener('pointermove', (event) => {
+        if (!isDragging) return;
+        scrubToClientX(event.clientX, dragOffsetX);
+      });
+
+      const endDrag = (event: PointerEvent) => {
+        if (!isDragging) return;
+        isDragging = false;
+        railEl.dataset.dragging = 'false';
+        if (railEl.hasPointerCapture(event.pointerId)) {
+          railEl.releasePointerCapture(event.pointerId);
+        }
+
+        // Snap cleanly to the nearest slide after dragging
+        const scrollLeft = track.scrollLeft;
+        let closestIdx = 0;
+        let closestDist = Infinity;
+        slides.forEach((slide, idx) => {
+          const dist = Math.abs(slide.offsetLeft - scrollLeft);
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestIdx = idx;
+          }
+        });
+
+        track.style.scrollBehavior = '';
+        track.style.scrollSnapType = '';
+        goTo(closestIdx, true);
+      };
+
+      railEl.addEventListener('pointerup', endDrag);
+      railEl.addEventListener('pointercancel', endDrag);
+    }
+
+    // Keep thumb, counter, and next-label synced during scroll / swipe
+    let rafId = 0;
+    track.addEventListener(
+      'scroll',
+      () => {
+        if (rafId) return;
+        rafId = window.requestAnimationFrame(() => {
+          rafId = 0;
+          syncThumb();
+
+          const scrollLeft = track.scrollLeft;
+          let closestIdx = 0;
+          let closestDist = Infinity;
+          slides.forEach((slide, idx) => {
+            const dist = Math.abs(slide.offsetLeft - scrollLeft);
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestIdx = idx;
+            }
+          });
+
+          if (closestIdx !== activeIndex) {
+            updateUI(closestIdx);
+          }
+        });
+      },
+      { passive: true },
+    );
+
+    window.addEventListener('resize', syncThumb, { passive: true });
+    updateUI(0);
+    syncThumb();
+    window.addEventListener('load', syncThumb, { once: true });
+  });
+</script>

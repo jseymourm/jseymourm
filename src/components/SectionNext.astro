@@ -1,0 +1,29 @@
+---
+interface Props {
+  href: string;
+  label: string;
+  direction?: 'down' | 'up';
+}
+
+const { href, label, direction = 'down' } = Astro.props;
+---
+
+<div class="flex justify-center py-12 sm:py-16">
+  <a
+    href={href}
+    class="group inline-flex items-center gap-3 border border-line-strong bg-canvas px-5 py-2.5 font-mono text-[11px] tracking-[0.12em] text-ink-secondary uppercase transition-all duration-150 hover:border-signal hover:bg-surface hover:text-signal"
+  >
+    <span>{label}</span>
+    <span
+      class:list={[
+        'transition-transform duration-150',
+        direction === 'down'
+          ? 'group-hover:translate-y-0.5'
+          : 'group-hover:-translate-y-0.5',
+      ]}
+      aria-hidden="true"
+    >
+      {direction === 'down' ? '↓' : '↑'}
+    </span>
+  </a>
+</div>

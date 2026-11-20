@@ -1,0 +1,47 @@
+---
+const sections = [
+  { id: 'top', index: '00', label: 'Intro', href: '/#top' },
+  { id: 'experience', index: '01', label: 'Experience', href: '/#experience' },
+  { id: 'projects', index: '02', label: 'Projects', href: '/#projects' },
+  { id: 'capabilities', index: '03', label: 'Capabilities', href: '/#capabilities' },
+  { id: 'education', index: '04', label: 'Education', href: '/#education' },
+  { id: 'contact', index: '05', label: 'Contact', href: '/#contact' },
+] as const;
+
+const pathname = Astro.url.pathname;
+const defaultActive = pathname.startsWith('/experience')
+  ? 'experience'
+  : pathname.startsWith('/projects')
+    ? 'projects'
+    : 'top';
+---
+
+<aside
+  aria-label="Section navigation panel"
+  class="sticky top-0 hidden h-dvh w-52 shrink-0 flex-col justify-center border-r border-line bg-canvas px-6 lg:flex xl:w-56"
+>
+  <nav aria-label="Primary sections">
+    <ul class="space-y-1.5">
+      {
+        sections.map((section) => {
+          const isActive = section.id === defaultActive;
+          return (
+            <li>
+              <a
+                href={section.href}
+                data-nav-section={section.id}
+                data-active={isActive ? 'true' : 'false'}
+                class="group flex items-center gap-3 border-l border-transparent py-2 pl-3 font-mono text-[11px] tracking-[0.1em] text-ink-secondary uppercase transition-all duration-150 hover:border-signal hover:text-signal data-[active=true]:border-signal data-[active=true]:text-signal"
+              >
+                <span class="text-[10px] text-ink-muted transition-colors duration-150 group-hover:text-signal group-data-[active=true]:text-signal">
+                  {section.index}
+                </span>
+                <span>{section.label}</span>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </nav>
+</aside>

@@ -1,0 +1,62 @@
+---
+title: "SunScore"
+context: "Sun Life Global Solutions"
+period: "May 2026 — Present"
+status: "Active"
+order: 1
+summary: "A full-stack Service Management Scoring Engine that normalizes ServiceNow data across Incident, Change, Problem, and Service Availability into a unified Service Reliability Index—paired with an Application Risk Register."
+outcome: "Answers 'What service is working and what isn't?' in one clear view, combining operational reliability with Technical Debt and Cyber Exposure."
+metrics:
+  - value: "4 → 1"
+    label: "Domains to SRI"
+  - value: "2"
+    label: "Data Layers"
+  - value: "AWS"
+    label: "EC2 + Entra + PG"
+stack:
+  - "React"
+  - "TypeScript"
+  - "Python"
+  - "PostgreSQL"
+  - "Microsoft Entra"
+  - "AWS EC2"
+  - "ServiceNow"
+---
+
+## Problem Statement
+
+Enterprise IT Service Management spans multiple operational disciplines—**Incident, Change, Problem, and Service Availability**—each generating its own spreadsheets, KPIs, and reporting cadence. When reliability degrades, teams and leaders still face a deceptively difficult question: **"What service is working, what isn't, and where do we need to intervene first?"**
+
+**SunScore** eliminates that ambiguity by unifying operational reliability and application risk into one disciplined, standardized index.
+
+## Core Capabilities
+
+### 1. Service Reliability Index (SRI)
+
+SunScore normalizes configured columns extracted from **ServiceNow** and maps each signal to a component-level weight within its respective ITSM domain. Those weighted components calibrate four core domains into one unified **Service Reliability Index**:
+
+- **Incident Management** — stability and disruption frequency
+- **Change Enablement** — delivery discipline and change-induced risk
+- **Problem Management** — recurrence elimination and root-cause maturity
+- **Service Availability** — uptime and operational continuity
+
+Rather than interpreting four disconnected dashboards, stakeholders get an immediate view of which services are healthy, which need attention, and where stability measures are required to protect delivery quality.
+
+### 2. Application Risk Register
+
+Alongside operational ITSM telemetry, SunScore defines a second dedicated ingestion layer: the **Application Risk Register**. This layer brings **Technical Debt** and **Cyber Exposure** per service or application into the same interface—allowing leadership to weigh day-to-day service reliability alongside structural and security risk in a single glance.
+
+## Architecture & Technical Stack
+
+| Layer | Technology | Role |
+| :--- | :--- | :--- |
+| **Frontend** | React + TypeScript | Typed interface for inspecting Service Reliability Index scores, domain breakdowns, and risk posture |
+| **Scoring Engine** | Python | Column normalization, weighted domain calibration, and composite SRI calculation |
+| **Database** | PostgreSQL | Structured persistence for historical scores, domain weights, and Application Risk Register records |
+| **Authentication** | Microsoft Entra | Enterprise identity and single sign-on access control |
+| **Hosting** | AWS EC2 | Dedicated compute environment for hosting the web application and scoring services |
+
+## Data Ingestion & Roadmap
+
+- **Current Ingestion**: Supports structured `.csv` and `.xlsx` uploads extracted from ServiceNow for controlled manual assessment and validation, plus independent ingestion for the Application Risk Register.
+- **Next Milestone**: Direct **ServiceNow** integration for automated live data transfers, enabling continuous near-real-time Service Reliability Index updates without manual export cycles.

@@ -1,0 +1,282 @@
+---
+// Progressive-enhancement custom chrome:
+// 1. Bright yellow dot pointer (morphs into targeting ring on selectable elements)
+// 2. Floating 3-inch vertical scroll rail (centered on right margin, click & drag)
+// 3. Matching floating 3-inch horizontal scroll rail (auto-activates only if horizontal overflow exists)
+---
+
+<div class="ias-cursor" id="ias-cursor" aria-hidden="true">
+  <span class="ias-cursor-dot"></span>
+</div>
+
+<div
+  class="ias-scroll-rail"
+  id="ias-scroll-rail"
+  data-interactive
+  role="scrollbar"
+  aria-orientation="vertical"
+  aria-label="Page scroll position"
+  aria-valuemin="0"
+  aria-valuemax="100"
+  aria-valuenow="0"
+>
+  <div class="ias-scroll-track" id="ias-scroll-track">
+    <div class="ias-scroll-thumb" id="ias-scroll-thumb"></div>
+  </div>
+</div>
+
+<script>
+  const finePointer = window.matchMedia('(pointer: fine) and (hover: hover)');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  if (finePointer.matches) {
+    const root = document.documentElement;
+    const cursorEl = document.getElementById('ias-cursor');
+    const railEl = document.getElementById('ias-scroll-rail');
+    const trackEl = document.getElementById('ias-scroll-track');
+    const thumbEl = document.getElementById('ias-scroll-thumb');
+
+    /* ------------------------------------------------------------------
+       1. Bright Yellow Custom Pointer
+       ------------------------------------------------------------------ */
+    if (cursorEl) {
+      root.classList.add('has-custom-cursor');
+
+      const INTERACTIVE_SELECTOR =
+        'a, button, summary, [role="button"], [data-interactive], input, textarea, select, label[for]';
+
+      let targetX = -100;
+      let targetY = -100;
+      let currentX = -100;
+      let currentY = -100;
+      let visible = false;
+      let rafId = 0;
+
+      const renderCursor = () => {
+        if (reducedMotion.matches) {
+          currentX = targetX;
+          currentY = targetY;
+        } else {
+          currentX += (targetX - currentX) * 0.34;
+          currentY += (targetY - currentY) * 0.34;
+        }
+
+        cursorEl.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+
+        if (
+          Math.abs(targetX - currentX) > 0.1 ||
+          Math.abs(targetY - currentY) > 0.1
+        ) {
+          rafId = window.requestAnimationFrame(renderCursor);
+        } else {
+          currentX = targetX;
+          currentY = targetY;
+          cursorEl.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+          rafId = 0;
+        }
+      };
+
+      const scheduleCursor = () => {
+        if (!rafId) {
+          rafId = window.requestAnimationFrame(renderCursor);
+        }
+      };
+
+      window.addEventListener(
+        'pointermove',
+        (event) => {
+          if (event.pointerType && event.pointerType !== 'mouse' && event.pointerType !== 'pen') {
+            return;
+          }
+          targetX = event.clientX;
+          targetY = event.clientY;
+
+          if (!visible) {
+            currentX = targetX;
+            currentY = targetY;
+            visible = true;
+            cursorEl.dataset.visible = 'true';
+          }
+
+          const target = event.target instanceof Element ? event.target : null;
+          const isInteractive = Boolean(target?.closest(INTERACTIVE_SELECTOR));
+          cursorEl.dataset.interactive = isInteractive ? 'true' : 'false';
+
+          scheduleCursor();
+        },
+        { passive: true },
+      );
+
+      window.addEventListener('pointerdown', () => {
+        cursorEl.dataset.pressed = 'true';
+      });
+
+      window.addEventListener('pointerup', () => {
+        cursorEl.dataset.pressed = 'false';
+      });
+
+      document.addEventListener('pointerleave', () => {
+        visible = false;
+        cursorEl.dataset.visible = 'false';
+      });
+
+      window.addEventListener('blur', () => {
+        visible = false;
+        cursorEl.dataset.visible = 'false';
+      });
+    }
+
+    /* ------------------------------------------------------------------
+       2. Floating 3-Inch Vertical Scroll Rail (Interactive Click & Drag)
+       ------------------------------------------------------------------ */
+    if (railEl && trackEl && thumbEl && window.innerWidth > 768) {
+      root.classList.add('has-custom-scroll');
+
+      let scrollFadeTimer: number | undefined;
+      let isDragging = false;
+      let dragOffsetY = 0;
+
+      const getMetrics = () => {
+        const docHeight = document.documentElement.scrollHeight;
+        const winHeight = window.innerHeight;
+        const maxScroll = Math.max(0, docHeight - winHeight);
+        const trackRect = trackEl.getBoundingClientRect();
+        const trackHeight = trackRect.height;
+        const ratio = docHeight > 0 ? winHeight / docHeight : 1;
+        const thumbHeight = Math.min(trackHeight, Math.max(28, trackHeight * ratio));
+        const maxThumbY = Math.max(0, trackHeight - thumbHeight);
+        return { docHeight, winHeight, maxScroll, trackRect, trackHeight, thumbHeight, maxThumbY };
+      };
+
+      const syncRail = () => {
+        const { maxScroll, thumbHeight, maxThumbY } = getMetrics();
+
+        if (maxScroll <= 4 || window.innerWidth <= 768) {
+          railEl.dataset.enabled = 'false';
+          return;
+        }
+
+        railEl.dataset.enabled = 'true';
+        const progress = Math.min(1, Math.max(0, window.scrollY / maxScroll));
+        const thumbY = progress * maxThumbY;
+
+        thumbEl.style.height = `${thumbHeight}px`;
+        thumbEl.style.transform = `translate3d(-50%, ${thumbY}px, 0)`;
+        railEl.setAttribute('aria-valuenow', String(Math.round(progress * 100)));
+      };
+
+      const scrollToClientY = (clientY: number, offsetY: number, smooth: boolean) => {
+        const { maxScroll, trackRect, maxThumbY } = getMetrics();
+        if (maxScroll <= 0 || maxThumbY <= 0) return;
+
+        const targetThumbY = Math.min(
+          maxThumbY,
+          Math.max(0, clientY - trackRect.top - offsetY),
+        );
+        const progress = targetThumbY / maxThumbY;
+        const targetScrollY = progress * maxScroll;
+
+        if (!smooth) {
+          root.style.scrollBehavior = 'auto';
+          window.scrollTo(0, targetScrollY);
+          root.style.scrollBehavior = '';
+        } else {
+          window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+        }
+      };
+
+      window.addEventListener(
+        'scroll',
+        () => {
+          syncRail();
+          railEl.dataset.scrolling = 'true';
+          window.clearTimeout(scrollFadeTimer);
+          scrollFadeTimer = window.setTimeout(() => {
+            railEl.dataset.scrolling = 'false';
+          }, 700);
+        },
+        { passive: true },
+      );
+
+      window.addEventListener('resize', syncRail, { passive: true });
+
+      railEl.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        const thumbRect = thumbEl.getBoundingClientRect();
+        const clickedThumb =
+          event.clientY >= thumbRect.top && event.clientY <= thumbRect.bottom;
+
+        dragOffsetY = clickedThumb
+          ? event.clientY - thumbRect.top
+          : thumbRect.height / 2;
+
+        isDragging = true;
+        railEl.dataset.dragging = 'true';
+        railEl.setPointerCapture(event.pointerId);
+
+        if (!clickedThumb) {
+          scrollToClientY(event.clientY, dragOffsetY, false);
+        }
+      });
+
+      railEl.addEventListener('pointermove', (event) => {
+        if (!isDragging) return;
+        scrollToClientY(event.clientY, dragOffsetY, false);
+      });
+
+      const endDrag = (event: PointerEvent) => {
+        if (!isDragging) return;
+        isDragging = false;
+        railEl.dataset.dragging = 'false';
+        if (railEl.hasPointerCapture(event.pointerId)) {
+          railEl.releasePointerCapture(event.pointerId);
+        }
+      };
+
+      railEl.addEventListener('pointerup', endDrag);
+      railEl.addEventListener('pointercancel', endDrag);
+
+      // Initial sync + re-sync once fonts/layout settle
+      syncRail();
+      window.addEventListener('load', syncRail, { once: true });
+    }
+  }
+
+  /* --------------------------------------------------------------------
+     3. Active Section Sync for Left Panel Navigation
+     -------------------------------------------------------------------- */
+  const navLinks = Array.from(
+    document.querySelectorAll<HTMLAnchorElement>('[data-nav-section]'),
+  );
+  const trackedSections = navLinks
+    .map((link) => {
+      const id = link.dataset.navSection;
+      const el = id ? document.getElementById(id) : null;
+      return el ? { id: id!, el } : null;
+    })
+    .filter((entry): entry is { id: string; el: HTMLElement } => Boolean(entry));
+
+  if (trackedSections.length > 0) {
+    const setActive = (activeId: string) => {
+      for (const link of navLinks) {
+        link.dataset.active = link.dataset.navSection === activeId ? 'true' : 'false';
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible[0]?.target.id) {
+          setActive(visible[0].target.id);
+        }
+      },
+      { rootMargin: '-25% 0px -55% 0px', threshold: [0, 0.25, 0.5] },
+    );
+
+    for (const section of trackedSections) {
+      observer.observe(section.el);
+    }
+  }
+</script>
