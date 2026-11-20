@@ -32,4 +32,4 @@ firebase init hosting   # select existing firebase.json, public dir: dist
 firebase deploy --only hosting
 ```
 
-> The original hand-coded HTML/CSS portfolio remains preserved in git history (`74f2f58`).
+> The original hand-coded HTML/CSS portfolio remains preserved in git history (`01226a1`).
